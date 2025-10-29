@@ -1,2 +1,2 @@
-# luna-nightgale.github.io
+# time-scrubber.github.io
 A fake time scrubber website
