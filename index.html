@@ -3,34 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Scrubber</title>
+    <title>Dynamic Dark Mode App</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles for the slider and font */
+        /* --- GLOBAL STYLES & DARK MODE --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Dark Gray 900 */
+            color: #f3f4f6; /* Light text */
+            transition: all 0.3s ease-in-out;
+            min-height: 200vh; /* Allow scrolling for header effect */
+        }
+
+        /* --- HEADER & SCROLL EFFECTS --- */
+        #fixed-header {
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Initial state of the hero header */
+        #hero-header {
+            height: 15rem; /* Large initial size */
+            opacity: 1;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* State when scrolled (controlled by JS) */
+        .scrolled #hero-header {
+            height: 0;
+            opacity: 0;
+            padding: 0;
+            margin: 0;
+        }
+        .scrolled #fixed-header {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
+            background-color: #1f2937; /* Darker gray background for fixed bar */
+        }
+
+        /* --- NAVIGATION & MENU ICON --- */
+        #sidebar {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 50;
+        }
+        #sidebar.open {
+            transform: translateX(0);
+        }
+
+        #menu-icon > span {
+            display: block;
+            height: 2px;
+            width: 20px;
+            background: #ffffff;
+            border-radius: 9999px;
+            transition: all 0.3s ease-in-out;
+        }
+        #menu-icon span:nth-child(2) { margin: 4px 0; }
+
+        #menu-toggle.open #menu-icon span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+        #menu-toggle.open #menu-icon span:nth-child(2) { opacity: 0; }
+        #menu-toggle.open #menu-icon span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+        
+        /* --- TIME SCRUBBER STYLES (Provided) --- */
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
         
         .time-display {
             font-family: 'Orbitron', monospace;
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-            transition: all 0.3s ease-in-out; /* Smooth transition for size/color changes */
+            transition: all 0.3s ease-in-out;
         }
 
-        /* Styling for the unit buttons */
         .unit-button {
             transition: all 0.15s ease-in-out;
-            @apply px-4 py-2 text-sm font-semibold rounded-lg bg-gray-700 text-gray-300 hover:bg-blue-600 hover:text-white border-2 border-transparent;
+            @apply px-4 py-2 text-sm font-semibold rounded-lg bg-gray-700 text-gray-300 hover:bg-indigo-600 hover:text-white border-2 border-transparent;
         }
         .unit-button.active {
-            @apply bg-blue-500 text-white border-blue-300 shadow-md;
+            @apply bg-indigo-500 text-white border-indigo-300 shadow-md;
         }
 
-        /* Styling the range input (slider) for better mobile touch target */
         input[type=range] {
             -webkit-appearance: none;
             width: 80%;
             height: 10px;
-            background: #2d3748;
-            border-radius: 50px; /* More rounded */
+            background: #374151; /* Gray 700 track */
+            border-radius: 50px;
             cursor: pointer;
             outline: none;
             margin: 20px 0;
@@ -38,33 +94,174 @@
         }
 
         input[type=range]:hover {
-            background: #4a5568;
+            background: #4b5563; /* Gray 600 hover */
         }
 
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 28px; /* Slightly larger thumb */
-            height: 28px; /* Slightly larger thumb */
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            background: #38bdf8; /* Sky Blue */
+            background: #6366f1; /* Indigo 500 */
             cursor: pointer;
-            box-shadow: 0 0 8px rgba(56, 189, 248, 0.7); /* Stronger shadow */
-            border: 2px solid #a78bfa; /* Added a border */
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.7);
+            border: 2px solid #a5b4fc; /* Indigo 300 */
         }
 
         input[type=range]::-moz-range-thumb {
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            background: #38bdf8;
+            background: #6366f1;
             cursor: pointer;
-            box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
-            border: 2px solid #a78bfa;
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.7);
+            border: 2px solid #a5b4fc;
         }
     </style>
+</head>
+<body>
+
+    <!-- --- FULL-WIDTH HERO HEADER (Collapses on Scroll) --- -->
+    <header id="hero-header" class="w-full pt-16 pb-8 flex items-center justify-center bg-gray-900 sticky top-0">
+        <h1 class="text-5xl font-extrabold text-indigo-400 tracking-tighter sm:text-7xl">
+            COSMIC DASHBOARD
+        </h1>
+    </header>
+
+    <!-- --- FIXED/COLLAPSING HEADER BAR --- -->
+    <header id="fixed-header" class="sticky top-0 z-40 p-4 bg-gray-900/90 backdrop-blur-sm shadow-xl">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <!-- This title is small by default and visible only when scrolled -->
+            <h1 id="mini-title" class="text-2xl font-bold text-gray-200 opacity-0 transition-opacity duration-300">Space Explorer</h1>
+            
+            <!-- Menu Toggle Button (Hamburger/X) -->
+            <button id="menu-toggle" class="z-50 p-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition duration-150 shadow-lg" aria-label="Toggle menu">
+                <div id="menu-icon" class="flex flex-col justify-center items-center">
+                    <span class="block"></span>
+                    <span class="block"></span>
+                    <span class="block"></span>
+                </div>
+            </button>
+        </div>
+    </header>
+
+    <!-- --- OFF-CANVAS SIDEBAR NAVIGATION --- -->
+    <nav id="sidebar" class="fixed top-0 right-0 h-full w-64 bg-gray-800 shadow-2xl p-6 flex flex-col pt-20">
+        <h3 class="text-xl font-bold mb-6 text-indigo-400">Navigation</h3>
+        <a href="#" data-page="home" class="nav-link py-3 px-4 text-gray-200 hover:bg-indigo-700 hover:text-white rounded-lg transition duration-150 font-semibold mb-2">Home (Dashboard)</a>
+        <a href="#" data-page="teleporter" class="nav-link py-3 px-4 text-gray-200 hover:bg-indigo-700 hover:text-white rounded-lg transition duration-150 font-semibold mb-2">Teleporter Terminal</a>
+        <a href="#" data-page="chronometer" class="nav-link py-3 px-4 text-gray-200 hover:bg-indigo-700 hover:text-white rounded-lg transition duration-150 font-semibold mb-2">Chronometer (Scrubber)</a>
+    </nav>
+    <div id="backdrop" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleMenu()"></div>
+
+    <!-- --- MAIN CONTENT AREA --- -->
+    <main id="main-content" class="p-4 md:p-8 max-w-7xl mx-auto">
+
+        <!-- HOME/DASHBOARD SECTION -->
+        <section id="home" class="page-section pt-4 min-h-screen">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-3xl font-extrabold text-gray-100 mb-8">System Access Modules</h2>
+                <p class="text-gray-400 mb-12 leading-relaxed">
+                    Select a module below to begin operations. The current system status is nominal.
+                </p>
+
+                <!-- Project Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <button data-page="teleporter" class="project-button bg-gray-800 hover:bg-indigo-700 active:scale-[0.98] transition p-8 rounded-xl shadow-xl border-t-4 border-indigo-500 group">
+                        <span class="text-4xl">🚀</span>
+                        <h3 class="text-2xl font-bold text-gray-100 mt-4 group-hover:text-white">Teleporter Terminal</h3>
+                        <p class="text-gray-400 mt-2 text-sm group-hover:text-indigo-200">Set coordinates and initiate jump sequences.</p>
+                    </button>
+                    
+                    <button data-page="chronometer" class="project-button bg-gray-800 hover:bg-indigo-700 active:scale-[0.98] transition p-8 rounded-xl shadow-xl border-t-4 border-indigo-500 group">
+                        <span class="text-4xl">⏱️</span>
+                        <h3 class="text-2xl font-bold text-gray-100 mt-4 group-hover:text-white">Chronometer Scrubber</h3>
+                        <p class="text-gray-400 mt-2 text-sm group-hover:text-indigo-200">Manipulate time and date offsets for simulations.</p>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELEPORTER TERMINAL SECTION -->
+        <section id="teleporter" class="page-section hidden p-8 bg-gray-800 rounded-2xl shadow-inner border border-indigo-700">
+            <h2 class="text-4xl font-extrabold text-indigo-400 mb-4">Teleporter Terminal</h2>
+            <p class="text-gray-400 mb-6">
+                Enter your desired cosmic coordinates. WARNING: Unauthorized jumps are strictly prohibited.
+            </p>
+            <form class="space-y-4 max-w-lg">
+                <input type="text" placeholder="Galaxy Sector (e.g., Andromeda-5)" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-gray-200 placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500">
+                <input type="text" placeholder="Destination Name" class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-gray-200 placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500">
+                <div class="flex space-x-4">
+                    <button type="button" class="flex-1 p-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">Calculate Trajectory</button>
+                    <button type="button" class="flex-1 p-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition shadow-md">Abort Sequence</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- CHRONOMETER SCRUBBER SECTION (Integrates the provided code UI) -->
+        <section id="chronometer" class="page-section hidden p-4 md:p-8 bg-gray-900 rounded-2xl shadow-2xl border border-indigo-700 flex flex-col items-center justify-center">
+            
+            <div class="w-full max-w-4xl text-center flex flex-col items-center p-8 space-y-8 bg-gray-800 rounded-2xl shadow-2xl border border-blue-700">
+        
+                <h1 class="text-4xl font-extrabold text-blue-400 tracking-wider">
+                    <span id="scrubber-title">TIME SCRUBBER</span>
+                </h1>
+
+                <!-- Mode Indicator --><p id="modeLabel" class="text-lg font-medium tracking-wide text-gray-400">
+                    Mode: Time Scrubbing
+                </p>
+
+                <!-- Status Message --><p id="stateMessage" class="text-lg font-medium tracking-wide text-green-400 transition-colors duration-300">
+                    LIVE: Current System Time
+                </p>
+
+                <!-- Time Display (Clickable) --><div id="clockContainer" class="time-display flex flex-col items-center">
+                    <div id="timeDisplay" class="text-7xl sm:text-9xl font-bold text-cyan-300 cursor-pointer" title="Click to switch to Time Scrubbing Mode">
+                        --:--:--
+                    </div>
+                    <div id="dateDisplay" class="text-3xl sm:text-5xl font-light mt-4 text-cyan-100 cursor-pointer" title="Click to switch to Date Scrubbing Mode">
+                        --/--/----
+                    </div>
+                </div>
+
+                <!-- Time Offset Display --><div class="text-xl font-mono p-2 bg-gray-700 rounded-lg">
+                    <span class="text-gray-400">OFFSET:</span> 
+                    <span id="offsetDisplay" class="text-yellow-300 font-bold">00h 00m 00s</span>
+                </div>
+        
+                <!-- Unit Selector for Date Mode (Hidden by default) -->
+                <div id="unitSelector" class="hidden w-full flex justify-center flex-wrap gap-2 transition-all duration-300">
+                    <button id="unit-days" class="unit-button active">Days</button>
+                    <button id="unit-months" class="unit-button">Months</button>
+                    <button id="unit-years" class="unit-button">Years</button>
+                    <button id="unit-decades" class="unit-button">Decades</button>
+                    <button id="unit-centuries" class="unit-button">Centuries</button>
+                </div>
+
+
+                <!-- Slider Control --><div class="w-full flex flex-col items-center">
+                    <label for="timeSlider" class="text-gray-400 text-sm mb-2">
+                        Slide Right to Move Forward (Up to 3 Hours)
+                    </label>
+                    <input type="range" id="timeSlider" value="0" min="0">
+                </div>
+
+                <p class="text-sm text-gray-500">
+                    Current Application ID: <code class="bg-gray-700 p-1 rounded text-xs text-gray-300" id="appIdDisplay"></code>
+                </p>
+            </div>
+
+        </section>
+        
+        <footer class="mt-20 p-4 text-center text-sm text-gray-500 border-t border-gray-700">
+            System Console v1.2 | Built with Gemini
+        </footer>
+    </main>
+
+    <!-- --- MAIN APPLICATION SCRIPT --- -->
     <script type="module">
-        // --- Firebase Setup (Required for Canvas Environment) ---
+        // --- Global Firebase & Auth Setup (MANDATORY) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -94,9 +291,53 @@
         } catch (error) {
             console.error("Firebase initialization failed:", error);
         }
-        // --- End Firebase Setup ---
+        // End Firebase Setup
 
-        // --- Clock and Slider Logic ---
+        // --- Core Application State & Navigation Logic ---
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menu-toggle');
+        const fixedHeader = document.getElementById('fixed-header');
+        const miniTitle = document.getElementById('mini-title');
+        const backdrop = document.getElementById('backdrop');
+
+        /**
+         * Toggles the visibility of the sidebar menu.
+         */
+        window.toggleMenu = function() {
+            const isOpen = sidebar.classList.toggle('open');
+            menuToggle.classList.toggle('open', isOpen);
+            backdrop.classList.toggle('hidden', !isOpen);
+        }
+
+        /**
+         * Hides all content sections and shows the requested one.
+         * @param {string} pageId - The ID of the section to show ('home', 'teleporter', 'chronometer').
+         */
+        function showPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+            toggleMenu(); // Close menu after navigation
+            
+            // Scroll to the top of the main content area
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- Collapsible Header Scroll Effect ---
+        window.addEventListener('scroll', () => {
+            const scrollThreshold = 150; // Distance to scroll before collapsing
+            const isScrolled = window.scrollY > scrollThreshold;
+
+            document.body.classList.toggle('scrolled', isScrolled);
+            fixedHeader.classList.toggle('pt-4', !isScrolled); // Taller padding when not collapsed
+            fixedHeader.classList.toggle('py-3', isScrolled);  // Smaller padding when collapsed
+            miniTitle.classList.toggle('opacity-100', isScrolled);
+            miniTitle.classList.toggle('opacity-0', !isScrolled);
+        });
+
+        // --- Time Scrubber Logic (Integrated from provided code) ---
+
         const timeDisplay = document.getElementById('timeDisplay');
         const dateDisplay = document.getElementById('dateDisplay');
         const slider = document.getElementById('timeSlider');
@@ -106,17 +347,15 @@
         const sliderLabel = document.querySelector('label[for="timeSlider"]');
         const unitSelector = document.getElementById('unitSelector');
         
-        // Global State Variables
         let mode = 'time'; // 'time' or 'date'
         let offsetUnit = 'seconds'; // 'seconds', 'days', 'months', 'years', 'decades', 'centuries'
         let intervalId = null;
         let isScrubbing = false;
-        let scrubStartBaseTimeMs = Date.now(); // The time captured when scrubbing starts
-        let scrubbedTimeMs = Date.now(); // The time/date that is ticking forward (M/D/Y/H/M/S)
+        let scrubStartBaseTimeMs = Date.now();
+        let scrubbedTimeMs = Date.now();
 
-        // Configuration for different scrubbing units
         const UNIT_CONFIG = {
-            'seconds': { label: 'Seconds', max: 3 * 3600, limit: '10,000 Hours' },
+            'seconds': { label: 'Seconds', max: 3 * 3600, limit: '3 Hours' },
             'days': { label: 'Days', max: 730, limit: '2 Years' },
             'months': { label: 'Months', max: 120, limit: '10 Years' },
             'years': { label: 'Years', max: 100, limit: '100 Years' },
@@ -124,17 +363,12 @@
             'centuries': { label: 'Centuries', max: 20, limit: '2000 Years' }
         };
 
-        // Formats a number to always have two digits (e.g., 5 -> 05)
         const pad = (num) => num.toString().padStart(2, '0');
 
-        /**
-         * Renders the clock display based on the current mode and scrubbedTimeMs.
-         */
         function renderDisplay() {
             const timeToDisplay = new Date(scrubbedTimeMs);
 
             if (mode === 'time') {
-                // Time Scrubbing Mode: H:M:S and M/D/Y come from scrubbedTimeMs
                 const hours = timeToDisplay.getHours();
                 const minutes = timeToDisplay.getMinutes();
                 const seconds = timeToDisplay.getSeconds();
@@ -146,16 +380,12 @@
                 dateDisplay.textContent = `${pad(month)}/${pad(day)}/${year}`;
             
             } else { // mode === 'date'
-                // Date Scrubbing Mode: Time (H:M:S) is live, Date (M/D/Y) comes from scrubbedTimeMs
-                
-                // Time Display: Use live system time for H:M:S
                 const liveTime = new Date();
                 const hours = liveTime.getHours();
                 const minutes = liveTime.getMinutes();
                 const seconds = liveTime.getSeconds();
                 timeDisplay.textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 
-                // Date Display: Use scrubbedTimeMs for M/D/Y
                 const month = timeToDisplay.getMonth() + 1;
                 const day = timeToDisplay.getDate();
                 const year = timeToDisplay.getFullYear();
@@ -163,16 +393,10 @@
             }
         }
 
-        /**
-         * Updates the offset display with appropriate units.
-         * @param {number} offsetValue - The raw slider value (number of units).
-         * @param {string} unit - The current offset unit ('seconds', 'days', etc.).
-         */
         function updateOffsetDisplay(offsetValue, unit = offsetUnit) {
             let offsetString;
             
             if (unit === 'seconds') {
-                // Format seconds into H:M:S
                 const hours = Math.floor(offsetValue / 3600);
                 const minutes = Math.floor((offsetValue % 3600) / 60);
                 const seconds = offsetValue % 60;
@@ -180,14 +404,12 @@
             } else if (unit === 'days') {
                 const years = Math.floor(offsetValue / 365);
                 const remainingDays = offsetValue % 365;
-                // If years is 0, just show days
+                
                 offsetString = years > 0 
                     ? `${years}y ${remainingDays}d` 
                     : `${offsetValue} Days`;
             } else {
-                // For Months, Years, Decades, Centuries, just show the count
                 let unitLabel = unit.charAt(0).toUpperCase() + unit.slice(1);
-                // Pluralize if necessary
                 if (offsetValue !== 1) {
                     unitLabel = unitLabel.endsWith('s') ? unitLabel : unitLabel + 's';
                 }
@@ -196,11 +418,6 @@
             offsetDisplay.textContent = offsetString;
         }
 
-        /**
-         * Starts the main clock interval, determining if it should track live time or tick forward.
-         * @param {number} initialTimeMs - The starting timestamp.
-         * @param {boolean} isLive - True if the clock should sync to Date.now() every tick.
-         */
         function startClockInterval(initialTimeMs, isLive) {
             if (intervalId) {
                 clearInterval(intervalId);
@@ -208,7 +425,6 @@
             
             scrubbedTimeMs = initialTimeMs;
             
-            // Set status messages
             let statusText = '';
             if (isLive) {
                 statusText = mode === 'time' ? 'LIVE: Current System Time' : 'LIVE TIME / CURRENT DATE';
@@ -225,12 +441,9 @@
 
             intervalId = setInterval(() => {
                 if (!isScrubbing) {
-                    // Only tick forward if we are in seconds mode OR if the unit is 'days' or greater (but only by seconds)
                     if (isLive && offsetUnit === 'seconds' && slider.value == 0) {
-                        // In Time Mode, at zero offset: track system time
                         scrubbedTimeMs = Date.now();
                     } else {
-                        // Scrubbed Time running forward (1 second per tick)
                         scrubbedTimeMs += 1000;
                     }
                     renderDisplay();
@@ -238,53 +451,37 @@
             }, 1000);
         }
 
-        /**
-         * Switches the active offset unit (only applicable in Date Scrubbing mode).
-         * @param {string} unit - The new offset unit.
-         */
         function switchOffsetUnit(unit) {
             if (offsetUnit === unit && mode === 'date') return; 
 
             offsetUnit = unit;
             
-            // Update button styles
             document.querySelectorAll('#unitSelector .unit-button').forEach(button => {
                 button.classList.remove('active');
             });
             document.getElementById(`unit-${unit}`).classList.add('active');
 
-            // Reset slider and update config
             const config = UNIT_CONFIG[unit];
             slider.max = config.max;
             slider.value = 0; 
             sliderLabel.textContent = `Slide Right to Move Forward (Up to ${config.limit})`;
             
-            // Recalculate base time (to prevent jumps)
             scrubStartBaseTimeMs = Date.now();
             
-            // Reset display
-            handleSliderEnd(); // This will reset scrubbedTimeMs to Date.now() and restart the interval if offset is 0
+            handleSliderEnd(); // Reset display
         }
 
-        /**
-         * Handles the click to toggle between time and date scrubbing modes.
-         * @param {string} newMode - 'time' or 'date'
-         */
         function switchMode(newMode) {
-            if (mode === newMode) return; // No change needed
+            if (mode === newMode) return;
 
             mode = newMode;
             const isDateMode = mode === 'date';
 
-            // 1. Set the initial offset unit for the new mode
             offsetUnit = isDateMode ? 'days' : 'seconds';
 
-            // 2. Toggle visibility of the unit selector
             unitSelector.classList.toggle('hidden', !isDateMode);
             
-            // 3. Update Visuals (Adjusted font sizes)
             if (isDateMode) {
-                // Date is big and blue, Time is small and gray
                 dateDisplay.classList.remove('text-cyan-100', 'text-3xl', 'sm:text-5xl');
                 dateDisplay.classList.add('text-blue-400', 'text-5xl', 'sm:text-7xl');
                 
@@ -292,14 +489,12 @@
                 timeDisplay.classList.add('text-gray-400', 'text-2xl', 'sm:text-4xl');
                 
                 modeLabel.textContent = 'Mode: Date Scrubbing';
-                // Activate the initial unit button for Date mode ('days') and deactivate others
                 document.querySelectorAll('#unitSelector .unit-button').forEach(button => {
-                     button.classList.remove('active');
+                   button.classList.remove('active');
                 });
                 document.getElementById('unit-days').classList.add('active');
 
             } else {
-                // Time is big and cyan, Date is small and white
                 dateDisplay.classList.remove('text-blue-400', 'text-5xl', 'sm:text-7xl');
                 dateDisplay.classList.add('text-cyan-100', 'text-3xl', 'sm:text-5xl');
 
@@ -307,13 +502,11 @@
                 timeDisplay.classList.add('text-cyan-300', 'text-7xl', 'sm:text-9xl');
                 
                 modeLabel.textContent = 'Mode: Time Scrubbing';
-                // Deactivate all date unit buttons when switching to time mode
                 document.querySelectorAll('#unitSelector .unit-button').forEach(button => {
                     button.classList.remove('active');
                 });
             }
             
-            // 4. Reset Time and Restart Interval (Live) - This also updates slider max/label/offset display
             scrubbedTimeMs = Date.now();
             scrubStartBaseTimeMs = Date.now();
             
@@ -326,15 +519,11 @@
             updateOffsetDisplay(0);
         }
 
-        /**
-         * Called when the user starts interacting with the slider.
-         */
         function handleSliderStart() {
             if (isScrubbing) return;
             
-            clearInterval(intervalId); // Pause the ticking
+            clearInterval(intervalId);
             
-            // Capture the current ticking time as the new base
             scrubStartBaseTimeMs = scrubbedTimeMs; 
             
             isScrubbing = true;
@@ -343,13 +532,9 @@
             stateMessage.classList.remove('text-green-400', 'text-blue-400');
             stateMessage.classList.add('text-yellow-400');
             
-            // Immediately calculate and render the scrubbed time when starting to slide
             handleScrubbing();
         }
 
-        /**
-         * Called continuously while the slider is moved.
-         */
         function handleScrubbing() {
             if (!isScrubbing) return; 
 
@@ -357,14 +542,10 @@
             let finalTimeMs;
             
             if (offsetUnit === 'seconds') {
-                // Offset is in seconds
                 finalTimeMs = scrubStartBaseTimeMs + (offsetValue * 1000);
             } else { 
-                // Date-based offset (days, months, years, decades, centuries)
-                // Use a copy of the base date to manipulate without side effects on base time
                 const baseDate = new Date(scrubStartBaseTimeMs);
 
-                // Note: setDate, setMonth, setFullYear handles day overflow automatically (e.g., setting month 13 rolls into the next year)
                 if (offsetUnit === 'days') {
                     baseDate.setDate(baseDate.getDate() + offsetValue);
                 } else if (offsetUnit === 'months') {
@@ -381,34 +562,44 @@
 
             updateOffsetDisplay(offsetValue, offsetUnit);
 
-            // Temporarily set scrubbedTimeMs to the offset value for rendering static preview
             scrubbedTimeMs = finalTimeMs;
             renderDisplay();
         }
 
-        /**
-         * Called when the user stops interacting with the slider.
-         */
         function handleSliderEnd() {
             isScrubbing = false;
 
             const finalOffsetValue = parseInt(slider.value, 10);
             
             if (finalOffsetValue === 0) {
-                // If slider is back at zero, return to the live time/date clock
                 startClockInterval(Date.now(), true);
                 updateOffsetDisplay(0);
             } else {
-                // Resume ticking from the scrubbed time/date (scrubbedTimeMs already holds the final offset value)
                 startClockInterval(scrubbedTimeMs, false);
             }
         }
         
         // --- Initialization ---
         window.onload = function() {
-            // Start the clock on load (live time)
-            // Call switchMode('time') to initialize all variables and the UI correctly
-            switchMode('time'); 
+            // App ID Display
+            document.getElementById('appIdDisplay').textContent = appId;
+            
+            // Initial navigation state
+            showPage('home');
+
+            // Attach navigation listeners
+            document.querySelectorAll('.nav-link, .project-button').forEach(element => {
+                element.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPage(e.currentTarget.getAttribute('data-page'));
+                });
+            });
+
+            // Attach menu toggle listener
+            menuToggle.addEventListener('click', toggleMenu);
+
+            // Time Scrubber Initializer
+            switchMode('time'); // Start the scrubber in 'time' mode
 
             // Attach mode switching listeners
             timeDisplay.addEventListener('click', () => switchMode('time'));
@@ -427,65 +618,9 @@
             slider.addEventListener('mouseup', handleSliderEnd);
             slider.addEventListener('touchstart', handleSliderStart);
             slider.addEventListener('touchend', handleSliderEnd);
-            slider.addEventListener('touchcancel', handleSliderEnd); // Handle edge case
+            slider.addEventListener('touchcancel', handleSliderEnd);
         };
 
-    </script>
-</head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
-    
-    <!-- Main Content Area --><div class="w-full max-w-4xl text-center flex flex-col items-center p-8 space-y-8 bg-gray-800 rounded-2xl shadow-2xl border border-blue-700">
-        
-        <h1 class="text-4xl font-extrabold text-blue-400 tracking-wider">
-            <span id="title">TIME SCRUBBER</span>
-        </h1>
-
-        <!-- Mode Indicator --><p id="modeLabel" class="text-lg font-medium tracking-wide text-gray-400">
-            Mode: Time Scrubbing
-        </p>
-
-        <!-- Status Message --><p id="stateMessage" class="text-lg font-medium tracking-wide text-green-400 transition-colors duration-300">
-            LIVE: Current System Time
-        </p>
-
-        <!-- Time Display (Clickable) --><div id="clockContainer" class="time-display flex flex-col items-center">
-            <div id="timeDisplay" class="text-7xl sm:text-9xl font-bold text-cyan-300 cursor-pointer" title="Click to switch to Time Scrubbing Mode">
-                --:--:--
-            </div>
-            <div id="dateDisplay" class="text-3xl sm:text-5xl font-light mt-4 text-cyan-100 cursor-pointer" title="Click to switch to Date Scrubbing Mode">
-                --/--/----
-            </div>
-        </div>
-
-        <!-- Time Offset Display --><div class="text-xl font-mono p-2 bg-gray-700 rounded-lg">
-            <span class="text-gray-400">OFFSET:</span> 
-            <span id="offsetDisplay" class="text-yellow-300 font-bold">00h 00m 00s</span>
-        </div>
-        
-        <!-- Unit Selector for Date Mode (Hidden by default) -->
-        <div id="unitSelector" class="hidden w-full flex justify-center flex-wrap gap-2 transition-all duration-300">
-            <button id="unit-days" class="unit-button active">Days</button>
-            <button id="unit-months" class="unit-button">Months</button>
-            <button id="unit-years" class="unit-button">Years</button>
-            <button id="unit-decades" class="unit-button">Decades</button>
-            <button id="unit-centuries" class="unit-button">Centuries</button>
-        </div>
-
-
-        <!-- Slider Control --><div class="w-full flex flex-col items-center">
-            <label for="timeSlider" class="text-gray-400 text-sm mb-2">
-                Slide Right to Move Forward (Up to 3 Hours)
-            </label>
-            <input type="range" id="timeSlider" value="0" min="0">
-        </div>
-
-        <p class="text-sm text-gray-500">
-            Current Application ID: <code class="bg-gray-700 p-1 rounded text-xs text-gray-300" id="appIdDisplay"></code>
-        </p>
-    </div>
-
-    <!-- Script to display App ID --><script>
-        document.getElementById('appIdDisplay').textContent = typeof __app_id !== '237896' ? __app_id : '237896';
     </script>
 </body>
 </html>
