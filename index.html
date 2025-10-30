@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dynamic Dark Mode App</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* --- GLOBAL STYLES & DARK MODE --- */
@@ -41,8 +40,11 @@
         }
 
         /* --- NAVIGATION & MENU ICON --- */
+        /*
+        * MODIFICATION: Removed the CSS transform and now use Tailwind's `translate-x-full`
+        * on the #sidebar element itself to manage its off-screen state.
+        */
         #sidebar {
-            transform: translateX(100%);
             transition: transform 0.3s ease-in-out;
             z-index: 50;
         }
@@ -122,20 +124,16 @@
 </head>
 <body>
 
-    <!-- --- FULL-WIDTH HERO HEADER (Collapses on Scroll) --- -->
     <header id="hero-header" class="w-full pt-16 pb-8 flex items-center justify-center bg-gray-900 sticky top-0">
         <h1 class="text-5xl font-extrabold text-indigo-400 tracking-tighter sm:text-7xl">
             COSMIC DASHBOARD
         </h1>
     </header>
 
-    <!-- --- FIXED/COLLAPSING HEADER BAR --- -->
     <header id="fixed-header" class="sticky top-0 z-40 p-4 bg-gray-900/90 backdrop-blur-sm shadow-xl">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <!-- This title is small by default and visible only when scrolled -->
             <h1 id="mini-title" class="text-2xl font-bold text-gray-200 opacity-0 transition-opacity duration-300">Space Explorer</h1>
             
-            <!-- Menu Toggle Button (Hamburger/X) -->
             <button id="menu-toggle" class="z-50 p-2 rounded-full bg-indigo-600 hover:bg-indigo-700 transition duration-150 shadow-lg" aria-label="Toggle menu">
                 <div id="menu-icon" class="flex flex-col justify-center items-center">
                     <span class="block"></span>
@@ -146,8 +144,13 @@
         </div>
     </header>
 
-    <!-- --- OFF-CANVAS SIDEBAR NAVIGATION --- -->
-    <nav id="sidebar" class="fixed top-0 right-0 h-full w-64 bg-gray-800 shadow-2xl p-6 flex flex-col pt-20">
+    <nav id="sidebar" class="fixed top-0 right-0 h-full w-64 bg-gray-800 shadow-2xl p-6 flex flex-col pt-20 **translate-x-full**">
+        <button onclick="toggleMenu()" class="absolute top-4 right-4 text-gray-400 hover:text-red-400 transition" aria-label="Close menu">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+        
         <h3 class="text-xl font-bold mb-6 text-indigo-400">Navigation</h3>
         <a href="#" data-page="home" class="nav-link py-3 px-4 text-gray-200 hover:bg-indigo-700 hover:text-white rounded-lg transition duration-150 font-semibold mb-2">Home (Dashboard)</a>
         <a href="#" data-page="teleporter" class="nav-link py-3 px-4 text-gray-200 hover:bg-indigo-700 hover:text-white rounded-lg transition duration-150 font-semibold mb-2">Teleporter Terminal</a>
@@ -155,10 +158,8 @@
     </nav>
     <div id="backdrop" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="toggleMenu()"></div>
 
-    <!-- --- MAIN CONTENT AREA --- -->
     <main id="main-content" class="p-4 md:p-8 max-w-7xl mx-auto">
 
-        <!-- HOME/DASHBOARD SECTION -->
         <section id="home" class="page-section pt-4 min-h-screen">
             <div class="max-w-4xl mx-auto text-center">
                 <h2 class="text-3xl font-extrabold text-gray-100 mb-8">System Access Modules</h2>
@@ -166,7 +167,6 @@
                     Select a module below to begin operations. The current system status is nominal.
                 </p>
 
-                <!-- Project Buttons -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <button data-page="teleporter" class="project-button bg-gray-800 hover:bg-indigo-700 active:scale-[0.98] transition p-8 rounded-xl shadow-xl border-t-4 border-indigo-500 group">
                         <span class="text-4xl">🚀</span>
@@ -183,7 +183,6 @@
             </div>
         </section>
 
-        <!-- TELEPORTER TERMINAL SECTION -->
         <section id="teleporter" class="page-section hidden p-8 bg-gray-800 rounded-2xl shadow-inner border border-indigo-700">
             <h2 class="text-4xl font-extrabold text-indigo-400 mb-4">Teleporter Terminal</h2>
             <p class="text-gray-400 mb-6">
@@ -199,58 +198,56 @@
             </form>
         </section>
 
-        <!-- CHRONOMETER SCRUBBER SECTION (Integrates the provided code UI) -->
         <section id="chronometer" class="page-section hidden p-4 md:p-8 bg-gray-900 rounded-2xl shadow-2xl border border-indigo-700 flex flex-col items-center justify-center">
             
             <div class="w-full max-w-4xl text-center flex flex-col items-center p-8 space-y-8 bg-gray-800 rounded-2xl shadow-2xl border border-blue-700">
-        
-                <h1 class="text-4xl font-extrabold text-blue-400 tracking-wider">
-                    <span id="scrubber-title">TIME SCRUBBER</span>
-                </h1>
+        
+                <h1 class="text-4xl font-extrabold text-blue-400 tracking-wider">
+                    <span id="scrubber-title">TIME SCRUBBER</span>
+                </h1>
 
-                <!-- Mode Indicator --><p id="modeLabel" class="text-lg font-medium tracking-wide text-gray-400">
-                    Mode: Time Scrubbing
-                </p>
+                <p id="modeLabel" class="text-lg font-medium tracking-wide text-gray-400">
+                    Mode: Time Scrubbing
+                </p>
 
-                <!-- Status Message --><p id="stateMessage" class="text-lg font-medium tracking-wide text-green-400 transition-colors duration-300">
-                    LIVE: Current System Time
-                </p>
+                <p id="stateMessage" class="text-lg font-medium tracking-wide text-green-400 transition-colors duration-300">
+                    LIVE: Current System Time
+                </p>
 
-                <!-- Time Display (Clickable) --><div id="clockContainer" class="time-display flex flex-col items-center">
-                    <div id="timeDisplay" class="text-7xl sm:text-9xl font-bold text-cyan-300 cursor-pointer" title="Click to switch to Time Scrubbing Mode">
-                        --:--:--
-                    </div>
-                    <div id="dateDisplay" class="text-3xl sm:text-5xl font-light mt-4 text-cyan-100 cursor-pointer" title="Click to switch to Date Scrubbing Mode">
-                        --/--/----
-                    </div>
-                </div>
+                <div id="clockContainer" class="time-display flex flex-col items-center">
+                    <div id="timeDisplay" class="text-7xl sm:text-9xl font-bold text-cyan-300 cursor-pointer" title="Click to switch to Time Scrubbing Mode">
+                        --:--:--
+                    </div>
+                    <div id="dateDisplay" class="text-3xl sm:text-5xl font-light mt-4 text-cyan-100 cursor-pointer" title="Click to switch to Date Scrubbing Mode">
+                        --/--/----
+                    </div>
+                </div>
 
-                <!-- Time Offset Display --><div class="text-xl font-mono p-2 bg-gray-700 rounded-lg">
-                    <span class="text-gray-400">OFFSET:</span> 
-                    <span id="offsetDisplay" class="text-yellow-300 font-bold">00h 00m 00s</span>
-                </div>
-        
-                <!-- Unit Selector for Date Mode (Hidden by default) -->
-                <div id="unitSelector" class="hidden w-full flex justify-center flex-wrap gap-2 transition-all duration-300">
-                    <button id="unit-days" class="unit-button active">Days</button>
-                    <button id="unit-months" class="unit-button">Months</button>
-                    <button id="unit-years" class="unit-button">Years</button>
-                    <button id="unit-decades" class="unit-button">Decades</button>
-                    <button id="unit-centuries" class="unit-button">Centuries</button>
-                </div>
+                <div class="text-xl font-mono p-2 bg-gray-700 rounded-lg">
+                    <span class="text-gray-400">OFFSET:</span> 
+                    <span id="offsetDisplay" class="text-yellow-300 font-bold">00h 00m 00s</span>
+                </div>
+        
+                <div id="unitSelector" class="hidden w-full flex justify-center flex-wrap gap-2 transition-all duration-300">
+                    <button id="unit-days" class="unit-button active">Days</button>
+                    <button id="unit-months" class="unit-button">Months</button>
+                    <button id="unit-years" class="unit-button">Years</button>
+                    <button id="unit-decades" class="unit-button">Decades</button>
+                    <button id="unit-centuries" class="unit-button">Centuries</button>
+                </div>
 
 
-                <!-- Slider Control --><div class="w-full flex flex-col items-center">
-                    <label for="timeSlider" class="text-gray-400 text-sm mb-2">
-                        Slide Right to Move Forward (Up to 3 Hours)
-                    </label>
-                    <input type="range" id="timeSlider" value="0" min="0">
-                </div>
+                <div class="w-full flex flex-col items-center">
+                    <label for="timeSlider" class="text-gray-400 text-sm mb-2">
+                        Slide Right to Move Forward (Up to 3 Hours)
+                    </label>
+                    <input type="range" id="timeSlider" value="0" min="0">
+                </div>
 
-                <p class="text-sm text-gray-500">
-                    Current Application ID: <code class="bg-gray-700 p-1 rounded text-xs text-gray-300" id="appIdDisplay"></code>
-                </p>
-            </div>
+                <p class="text-sm text-gray-500">
+                    Current Application ID: <code class="bg-gray-700 p-1 rounded text-xs text-gray-300" id="appIdDisplay"></code>
+                </p>
+            </div>
 
         </section>
         
@@ -259,7 +256,6 @@
         </footer>
     </main>
 
-    <!-- --- MAIN APPLICATION SCRIPT --- -->
     <script type="module">
         // --- Global Firebase & Auth Setup (MANDATORY) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -302,9 +298,18 @@
 
         /**
          * Toggles the visibility of the sidebar menu.
+         * MODIFICATION: Toggling 'open' class for CSS transform and 
+         * using Tailwind's 'translate-x-full' to hide/show.
          */
         window.toggleMenu = function() {
-            const isOpen = sidebar.classList.toggle('open');
+            const isCurrentlyOpen = sidebar.classList.contains('open');
+            const isOpen = !isCurrentlyOpen;
+
+            // Toggle 'open' class for custom CSS transform (sidebar.open)
+            sidebar.classList.toggle('open', isOpen);
+            // Toggle Tailwind class for off-canvas (translate-x-full)
+            sidebar.classList.toggle('translate-x-full', !isOpen);
+            
             menuToggle.classList.toggle('open', isOpen);
             backdrop.classList.toggle('hidden', !isOpen);
         }
@@ -584,8 +589,8 @@
             // App ID Display
             document.getElementById('appIdDisplay').textContent = appId;
             
-            // Initial navigation state
-            showPage('home');
+            // Initial navigation state (also closes the sidebar initially)
+            showPage('home'); 
 
             // Attach navigation listeners
             document.querySelectorAll('.nav-link, .project-button').forEach(element => {
