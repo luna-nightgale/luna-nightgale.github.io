@@ -239,7 +239,7 @@
             <a href="#work" class="nav-item">Work</a>
             <a href="#blog" class="nav-item">Blog</a>
             <a href="#contact" class="nav-item">Contact</a>
-            <a href="about.html" class="nav-item">Projects</a>
+            <a href="projects.html" class="nav-item">Projects</a>
         </nav>
 
         <main class="content">
@@ -301,15 +301,21 @@
         // Smooth scrolling for navigation
         document.querySelectorAll('.nav-item').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href').substring(1);
-                const targetElement = document.getElementById(targetId);
-                if (targetElement) {
-                    targetElement.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
+                const href = this.getAttribute('href');
+                
+                // Only handle smooth scrolling for anchor links (starting with #)
+                if (href.startsWith('#')) {
+                    e.preventDefault();
+                    const targetId = href.substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
                 }
+                // Let page links (like projects.html) work normally
             });
         });
 
